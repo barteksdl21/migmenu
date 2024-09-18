@@ -11,6 +11,7 @@ import qrcode
 from flask import send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
+from flask import jsonify
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a secure key
@@ -71,6 +72,10 @@ class MenuItemForm(FlaskForm):
 class CreateMenuForm(FlaskForm):
   title = StringField('Menu Title', validators=[DataRequired(), Length(max=150)])
   submit_button = SubmitField('Create Menu')
+
+class EditMenuForm(FlaskForm):
+  title = StringField('Menu Title', validators=[DataRequired(), Length(max=150)])
+  submit_button = SubmitField('Update Menu')  
 
 # Utility function to generate random string for shareable link
 def generate_unique_link(length=8):
@@ -216,7 +221,7 @@ def edit_menu(link):
       flash('You do not have permission to edit this menu.', 'danger')
       return redirect(url_for('view_menu', link=link))
   
-  form = CreateMenuForm(obj=menu)
+  form = EditMenuForm(obj=menu)
   
   if form.validate_on_submit():
       menu.title = form.title.data
@@ -235,12 +240,14 @@ def edit_menu(link):
           category_name = categories_data.get(f'categories[{category_index}][name]', [''])[0]
           category_order = int(categories_data.get(f'categories[{category_index}][order]', [0])[0])
           
-          if category_index.isdigit() and int(category_index) in existing_category_ids:
+          if category_index.startswith('category-'):
+              category_id = int(category_index.split('-')[-1])
               # Update existing category
-              category = Category.query.get(int(category_index))
-              category.name = category_name
-              category.order = category_order
-              updated_category_ids.add(category.id)
+              category = Category.query.get(category_id)
+              if category:
+                  category.name = category_name
+                  category.order = category_order
+                  updated_category_ids.add(category.id)
           elif category_name:
               # Create new category
               category = Category(name=category_name, menu_id=menu.id, order=category_order)
@@ -266,17 +273,22 @@ def edit_menu(link):
           description = categories_data.get(f'items[{item_index}][description]', [''])[0]
           price = categories_data.get(f'items[{item_index}][price]', ['0'])[0]
           item_order = int(categories_data.get(f'items[{item_index}][order]', [0])[0])
-          category_id = int(categories_data.get(f'items[{item_index}][category_id]', [0])[0])
+          category_id_str = categories_data.get(f'items[{item_index}][category_id]', [''])[0]
           
-          if item_index.isdigit() and int(item_index) in existing_item_ids:
+          # Extract the numeric part of the category_id
+          category_id = int(category_id_str.split('-')[-1]) if category_id_str.startswith('category-') else int(category_id_str)
+          
+          if item_index.startswith('item-'):
+              item_id = int(item_index.split('-')[-1])
               # Update existing item
-              item = MenuItem.query.get(int(item_index))
-              item.name = name
-              item.description = description
-              item.price = float(price)
-              item.order = item_order
-              item.category_id = category_id
-              updated_item_ids.add(item.id)
+              item = MenuItem.query.get(item_id)
+              if item:
+                  item.name = name
+                  item.description = description
+                  item.price = float(price)
+                  item.order = item_order
+                  item.category_id = category_id
+                  updated_item_ids.add(item.id)
           elif name and price:
               # Create new item
               item = MenuItem(name=name, description=description, price=float(price),
@@ -285,7 +297,7 @@ def edit_menu(link):
               db.session.flush()  # To get the item.id
               updated_item_ids.add(item.id)
           
-          print(f"Updated/Created item: {item.name} - {item.price} - Order: {item_order} - Category: {category_id}")  # Debug print
+          print(f"Updated/Created item: {name} - {price} - Order: {item_order} - Category: {category_id}")  # Debug print
       
       # Delete items that were removed
       for item_id in existing_item_ids - updated_item_ids:
@@ -305,6 +317,28 @@ def edit_menu(link):
   categories = Category.query.filter_by(menu_id=menu.id).order_by(Category.order).all()
   return render_template('edit_menu.html', form=form, menu=menu, categories=categories)
 
+@app.route('/delete/<link>', methods=['POST'])
+@login_required
+def delete_menu(link):
+  menu = Menu.query.filter_by(shareable_link=link).first_or_404()
+  if menu.owner != current_user:
+      return jsonify({'success': False, 'message': 'You do not have permission to delete this menu.'}), 403
+  
+  # Delete associated QR code file
+  qr_file_path = os.path.join(QR_DIR, menu.qr_code)
+  if os.path.exists(qr_file_path):
+      os.remove(qr_file_path)
+  
+  # Delete the menu and all associated categories and items
+  db.session.delete(menu)
+  
+  try:
+      db.session.commit()
+      return jsonify({'success': True, 'message': 'Menu deleted successfully!'})
+  except Exception as e:
+      db.session.rollback()
+      return jsonify({'success': False, 'message': 'An error occurred while deleting the menu.'}), 500
+
 # Dashboard Route
 @app.route('/dashboard')
 @login_required
@@ -320,6 +354,15 @@ def index():
 @app.route('/qr_codes/<filename>')
 def serve_qr_code(filename):
   return send_from_directory(QR_DIR, filename)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
   app.run(debug=True)

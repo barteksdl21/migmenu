@@ -6,11 +6,13 @@
     {% for menu in menus %}
         <li>
             <a href="{{ url_for('view_menu', link=menu.shareable_link) }}">{{ menu.title }}</a> |
-            <a href="{{ url_for('edit_menu', link=menu.shareable_link) }}">Edit</a>
+            <a href="{{ url_for('edit_menu', link=menu.shareable_link) }}">Edit</a> |
+            <a href="#" class="delete-menu" data-link="{{ menu.shareable_link }}">Delete</a>
         </li>
     {% else %}
         <li>You have not created any menus yet.</li>
     {% endfor %}
 </ul>
-<a href="{{ url_for('create_menu') }}" class="btn">Create New Menu</a>
+<a href="{{ url_for('create_menu') }}" class="btn">Create New Menu</a>  
+<script src="{{ url_for('static', filename='js/delete_menu.js') }}"></script>
 {% endblock %}

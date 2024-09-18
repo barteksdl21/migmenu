@@ -14,20 +14,30 @@
     <h2>Menu Categories and Items</h2>
     <div id="menuStructure">
         {% for category in categories %}
-            <div id="category-{{ category.id }}" class="category" draggable="true">
-                <input type="text" name="categories[{{ category.id }}][name]" value="{{ category.name }}" placeholder="Category Name" required>
-                <input type="hidden" name="categories[{{ category.id }}][order]" value="{{ category.order }}">
-                <button type="button" onclick="addItem('category-{{ category.id }}')">Add Item</button>
-                <div class="items-container">
-                    {% for item in category.items %}
-                        <div class="item" draggable="true" data-item-id="{{ item.id }}">
-                            <input type="text" name="items[{{ item.id }}][name]" value="{{ item.name }}" placeholder="Item Name" required>
-                            <input type="text" name="items[{{ item.id }}][description]" value="{{ item.description }}" placeholder="Description">
-                            <input type="number" name="items[{{ item.id }}][price]" value="{{ item.price }}" placeholder="Price" step="0.01" required>
-                            <input type="hidden" name="items[{{ item.id }}][order]" value="{{ item.order }}">
-                            <input type="hidden" name="items[{{ item.id }}][category_id]" value="{{ category.id }}">
-                        </div>
-                    {% endfor %}
+            <div id="category-{{ category.id }}" class="category">
+                <svg class="drag-handle" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6H16M8 12H16M8 18H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                    <input type="text" name="categories[category-{{ category.id }}][name]" value="{{ category.name }}" placeholder="Category Name" required>
+                    <input type="hidden" name="categories[category-{{ category.id }}][order]" value="{{ category.order }}">
+                    <button type="button" onclick="addItem('category-{{ category.id }}')">Add Item</button>
+                    <div class="items-container">
+                        {% for item in category.items %}
+                            <div class="item" data-item-id="item-{{ item.id }}">
+                                <svg class="drag-handle" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 6H16M8 12H16M8 18H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <div>
+                                    <input type="text" name="items[item-{{ item.id }}][name]" value="{{ item.name }}" placeholder="Item Name" required>
+                                    <input type="text" name="items[item-{{ item.id }}][description]" value="{{ item.description }}" placeholder="Description">
+                                    <input type="number" name="items[item-{{ item.id }}][price]" value="{{ item.price }}" placeholder="Price" step="0.01" required>
+                                    <input type="hidden" name="items[item-{{ item.id }}][order]" value="{{ item.order }}">
+                                    <input type="hidden" name="items[item-{{ item.id }}][category_id]" value="category-{{ category.id }}">
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -37,6 +47,23 @@
     {{ form.submit_button(class="btn") }}
 </form>
 
+<script>
+    const isEditPage = true;
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/menu_creator.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.category').forEach(makeElementDraggable);
+        
+        new Sortable(document.getElementById('menuStructure'), {
+            group: 'categories',
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function (evt) {
+                updateCategoryOrder();
+            }
+        });
+    });
+</script>
 {% endblock %}

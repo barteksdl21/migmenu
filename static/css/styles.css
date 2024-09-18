@@ -114,3 +114,23 @@ form .error {
 .btn:hover {
     background-color: #0056b3;
 }
+
+.drag-handle {
+    cursor: move;
+    padding: 5px;
+    margin-right: 10px;
+    color: #888;
+}
+
+.category, .item {
+    display: flex;
+    align-items: center;
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.category > div, .item > div {
+    flex-grow: 1;
+}
