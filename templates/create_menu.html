@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Create a New Menu</h1>
+<form id="menuForm" method="POST">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.title.label }}<br>
+        {{ form.title(size=50) }}<br>
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+    <hr>
+    <h2>Menu Categories and Items</h2>
+    <div id="menuStructure">
+        <!-- Categories and items will be added here dynamically -->
+    </div>
+    <button type="button" onclick="addCategory()">Add Category</button>
+    <br><br>
+    {{ form.submit_button(class="btn") }}
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/menu_creator.js') }}"></script>
+{% endblock %}

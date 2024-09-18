@@ -1,0 +1,16 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Menus</h2>
+<ul>
+    {% for menu in menus %}
+        <li>
+            <a href="{{ url_for('view_menu', link=menu.shareable_link) }}">{{ menu.title }}</a> |
+            <a href="{{ url_for('edit_menu', link=menu.shareable_link) }}">Edit</a>
+        </li>
+    {% else %}
+        <li>You have not created any menus yet.</li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('create_menu') }}" class="btn">Create New Menu</a>
+{% endblock %}

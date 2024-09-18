@@ -1,0 +1,7 @@
+   <!-- templates/index.html -->
+   {% extends "base.html" %}
+   {% block content %}
+   <h1>Welcome to Menu Generator</h1>
+   <p>Create and manage your restaurant or cafe menu easily.</p>
+   <a href="{{ url_for('create_menu') }}" class="btn">Get Started</a>
+   {% endblock %}

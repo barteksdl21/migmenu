@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit Menu: {{ menu.title }}</h1>
+<form id="menuForm" method="POST">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.title.label }}<br>
+        {{ form.title(size=50) }}<br>
+        {% for error in form.title.errors %}
+            <span class="error">{{ error }}</span>
+        {% endfor %}
+    </div>
+    <hr>
+    <h2>Menu Categories and Items</h2>
+    <div id="menuStructure">
+        {% for category in categories %}
+            <div id="category-{{ category.id }}" class="category" draggable="true">
+                <input type="text" name="categories[{{ category.id }}][name]" value="{{ category.name }}" placeholder="Category Name" required>
+                <input type="hidden" name="categories[{{ category.id }}][order]" value="{{ category.order }}">
+                <button type="button" onclick="addItem('category-{{ category.id }}')">Add Item</button>
+                <div class="items-container">
+                    {% for item in category.items %}
+                        <div class="item" draggable="true" data-item-id="{{ item.id }}">
+                            <input type="text" name="items[{{ item.id }}][name]" value="{{ item.name }}" placeholder="Item Name" required>
+                            <input type="text" name="items[{{ item.id }}][description]" value="{{ item.description }}" placeholder="Description">
+                            <input type="number" name="items[{{ item.id }}][price]" value="{{ item.price }}" placeholder="Price" step="0.01" required>
+                            <input type="hidden" name="items[{{ item.id }}][order]" value="{{ item.order }}">
+                            <input type="hidden" name="items[{{ item.id }}][category_id]" value="{{ category.id }}">
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <button type="button" onclick="addCategory()">Add Category</button>
+    <br><br>
+    {{ form.submit_button(class="btn") }}
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/menu_creator.js') }}"></script>
+{% endblock %}

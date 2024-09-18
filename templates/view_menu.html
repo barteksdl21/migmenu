@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ menu.title }}</h1>
+<a href="{{ url_for('edit_menu', link=menu.shareable_link) }}" class="btn">Edit Menu</a>
+<h2>Menu Items</h2>
+{% for category in categories|sort(attribute='order')  %}
+    <h3>{{ category.name }}</h3>
+    <ul>
+        {% for item in category.items|sort(attribute='order') %}
+            <li>
+                <strong>{{ item.name }}</strong> - ${{ "%.2f"|format(item.price) }}<br>
+                <em>{{ item.description }}</em>
+            </li>
+        {% endfor %}
+    </ul>
+{% endfor %}
+<h2>Share Your Menu</h2>
+<p>Shareable Link: <a href="{{ url_for('view_menu', link=menu.shareable_link, _external=True) }}">{{ url_for('view_menu', link=menu.shareable_link, _external=True) }}</a></p>
+<p>QR Code:</p>
+<img src="{{ qr_code_url }}" alt="QR Code">
+{% endblock %}
